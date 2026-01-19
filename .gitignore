@@ -31,3 +31,4 @@ yarn-error.log*
 
 # Vite
 vite.config.d.ts
+.vercel

@@ -36,6 +36,7 @@ interface AppState {
   // Performance
   driverPerformance: DriverPerformance[];
   setDriverPerformance: (performance: DriverPerformance[]) => void;
+  removeDriverPerformance: (id: string) => void;
 
   // Incentive Calculations
   incentiveCalculations: IncentiveCalculation[];
@@ -88,6 +89,10 @@ export const useStore = create<AppState>((set) => ({
   // Performance
   driverPerformance: [],
   setDriverPerformance: (driverPerformance) => set({ driverPerformance }),
+  removeDriverPerformance: (id) =>
+    set((state) => ({
+      driverPerformance: state.driverPerformance.filter((p) => p.id !== id),
+    })),
 
   // Incentive Calculations
   incentiveCalculations: [],

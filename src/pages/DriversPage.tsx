@@ -2,12 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AddDriverModal from "../components/AddDriverModal";
 import { useStore } from "../store/useStore";
-import {
+import
+  {
     formatCurrency,
     formatDate,
     generateInitials,
     getStatusColor,
-} from "../utils/formatters";
+  } from "../utils/formatters";
 
 type FilterStatus = "all" | "active" | "inactive" | "suspended" | "terminated";
 type FilterType = "all" | "local" | "export";
@@ -56,12 +57,12 @@ export default function DriversPage() {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-900">Drivers</h1>
-          <p className="text-surface-500 mt-1">
+          <h1 className="text-xl font-semibold text-surface-900">Drivers</h1>
+          <p className="text-sm text-surface-500 mt-0.5">
             Manage your fleet drivers and their profiles
           </p>
         </div>
@@ -70,7 +71,7 @@ export default function DriversPage() {
           className="btn btn-primary"
         >
           <svg
-            className="w-5 h-5"
+            className="w-4 h-4"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -87,40 +88,40 @@ export default function DriversPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-surface-200 p-4">
-          <p className="text-sm text-surface-500">Total Drivers</p>
-          <p className="text-2xl font-semibold text-surface-900 mt-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white rounded-lg border border-surface-200 p-3">
+          <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Total Drivers</p>
+          <p className="text-xl font-semibold text-surface-900 mt-1">
             {stats.total}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 p-4">
-          <p className="text-sm text-surface-500">Active</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">
+        <div className="bg-white rounded-lg border border-surface-200 p-3">
+          <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Active</p>
+          <p className="text-xl font-semibold text-green-600 mt-1">
             {stats.active}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 p-4">
-          <p className="text-sm text-surface-500">Local</p>
-          <p className="text-2xl font-semibold text-primary-600 mt-1">
+        <div className="bg-white rounded-lg border border-surface-200 p-3">
+          <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Local</p>
+          <p className="text-xl font-semibold text-primary-600 mt-1">
             {stats.local}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-surface-200 p-4">
-          <p className="text-sm text-surface-500">Export</p>
-          <p className="text-2xl font-semibold text-yellow-600 mt-1">
+        <div className="bg-white rounded-lg border border-surface-200 p-3">
+          <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Export</p>
+          <p className="text-xl font-semibold text-amber-600 mt-1">
             {stats.export}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-surface-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-lg border border-surface-200 p-3">
+        <div className="flex flex-col md:flex-row gap-3">
           {/* Search */}
           <div className="flex-1 relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -135,7 +136,7 @@ export default function DriversPage() {
             <input
               type="text"
               placeholder="Search by name, ID, or license..."
-              className="form-input pl-10"
+              className="form-input pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -143,7 +144,7 @@ export default function DriversPage() {
 
           {/* Status Filter */}
           <select
-            className="form-select md:w-40"
+            className="form-select md:w-36"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
           >
@@ -156,7 +157,7 @@ export default function DriversPage() {
 
           {/* Type Filter */}
           <select
-            className="form-select md:w-40"
+            className="form-select md:w-36"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as FilterType)}
           >
@@ -168,7 +169,7 @@ export default function DriversPage() {
       </div>
 
       {/* Drivers Table */}
-      <div className="bg-white rounded-xl border border-surface-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-surface-200 overflow-hidden">
         <div className="table-container">
           <table>
             <thead>
@@ -188,15 +189,15 @@ export default function DriversPage() {
                 filteredDrivers.map((driver) => (
                   <tr key={driver.id}>
                     <td>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-sm font-medium text-primary-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-primary-50 flex items-center justify-center text-xs font-medium text-primary-700">
                           {generateInitials(
                             driver.first_name,
                             driver.last_name,
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-surface-900">
+                          <p className="text-sm font-medium text-surface-900">
                             {driver.first_name} {driver.last_name}
                           </p>
                           <p className="text-xs text-surface-500">
@@ -205,7 +206,7 @@ export default function DriversPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="font-mono text-sm">{driver.employee_id}</td>
+                    <td className="font-mono text-xs">{driver.employee_id}</td>
                     <td>
                       <span
                         className={`badge ${driver.driver_type === "local" ? "badge-info" : "badge-warning"}`}
@@ -215,7 +216,7 @@ export default function DriversPage() {
                     </td>
                     <td>
                       <div>
-                        <p className="font-mono text-sm">
+                        <p className="font-mono text-xs">
                           {driver.license_number}
                         </p>
                         <p className="text-xs text-surface-500">
@@ -223,8 +224,8 @@ export default function DriversPage() {
                         </p>
                       </div>
                     </td>
-                    <td>{formatDate(driver.hire_date)}</td>
-                    <td className="font-medium">
+                    <td className="text-xs">{formatDate(driver.hire_date)}</td>
+                    <td className="font-medium text-sm">
                       {formatCurrency(driver.base_salary)}
                     </td>
                     <td>

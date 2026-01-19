@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import AddPerformanceModal from "../components/AddPerformanceModal";
 import AddRecordModal from "../components/AddRecordModal";
 import EditDriverModal from "../components/EditDriverModal";
 import { useDriverRecords } from "../hooks/useRealtimeData";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { useStore } from "../store/useStore";
-import {
+import
+  {
     calculateAchievementPercentage,
     formatCurrency,
     formatDate,
@@ -19,7 +21,7 @@ import {
     getMonthName,
     getSeverityColor,
     getStatusColor,
-} from "../utils/formatters";
+  } from "../utils/formatters";
 
 type TabId = "overview" | "performance" | "records" | "incentives";
 
@@ -47,6 +49,7 @@ export default function DriverProfile() {
   const [showAddRecordModal, setShowAddRecordModal] = useState<string | null>(
     null,
   );
+  const [showAddPerformanceModal, setShowAddPerformanceModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const driver = drivers.find((d) => d.id === id);
@@ -65,10 +68,10 @@ export default function DriverProfile() {
 
   if (!driver) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-4">
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="w-12 h-12 rounded-lg bg-surface-100 flex items-center justify-center mb-3">
           <svg
-            className="w-8 h-8 text-surface-400"
+            className="w-6 h-6 text-surface-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -81,13 +84,13 @@ export default function DriverProfile() {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-surface-900">
+        <h2 className="text-lg font-semibold text-surface-900">
           Driver Not Found
         </h2>
-        <p className="text-surface-500 mt-1">
+        <p className="text-sm text-surface-500 mt-0.5">
           The driver you're looking for doesn't exist or has been removed.
         </p>
-        <Link to="/drivers" className="btn btn-primary mt-6">
+        <Link to="/drivers" className="btn btn-primary mt-4">
           Back to Drivers
         </Link>
       </div>
@@ -147,14 +150,14 @@ export default function DriverProfile() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-surface-500">
+      <nav className="flex items-center gap-1.5 text-xs text-surface-500">
         <Link to="/drivers" className="hover:text-surface-700">
           Drivers
         </Link>
         <svg
-          className="w-4 h-4"
+          className="w-3.5 h-3.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -166,25 +169,25 @@ export default function DriverProfile() {
             d="M9 5l7 7-7 7"
           />
         </svg>
-        <span className="text-surface-900">
+        <span className="text-surface-900 font-medium">
           {driver.first_name} {driver.last_name}
         </span>
       </nav>
 
       {/* Profile Header */}
-      <div className="bg-white rounded-2xl border border-surface-200 p-6">
-        <div className="flex flex-col md:flex-row md:items-start gap-6">
+      <div className="bg-white rounded-lg border border-surface-200 p-4">
+        <div className="flex flex-col md:flex-row md:items-start gap-4">
           {/* Avatar & Basic Info */}
-          <div className="flex items-start gap-4 flex-1">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl font-semibold text-white">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-lg font-semibold text-white">
               {generateInitials(driver.first_name, driver.last_name)}
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-surface-900">
+              <h1 className="text-xl font-semibold text-surface-900">
                 {driver.first_name} {driver.last_name}
               </h1>
-              <p className="text-surface-500 mt-1">{driver.employee_id}</p>
-              <div className="flex items-center gap-3 mt-3">
+              <p className="text-xs text-surface-500 font-mono mt-0.5">{driver.employee_id}</p>
+              <div className="flex items-center gap-2 mt-2">
                 <span className={`badge ${getStatusColor(driver.status)}`}>
                   {driver.status.charAt(0).toUpperCase() +
                     driver.status.slice(1)}
@@ -232,28 +235,28 @@ export default function DriverProfile() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-surface-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-surface-100">
           <div>
-            <p className="text-sm text-surface-500">Total Kilometers</p>
-            <p className="text-xl font-semibold text-surface-900">
+            <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Total Kilometers</p>
+            <p className="text-lg font-semibold text-surface-900 mt-0.5">
               {formatNumber(totalKilometers)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-surface-500">Total Trips</p>
-            <p className="text-xl font-semibold text-surface-900">
+            <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Total Trips</p>
+            <p className="text-lg font-semibold text-surface-900 mt-0.5">
               {formatNumber(totalTrips)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-surface-500">Total Incentives</p>
-            <p className="text-xl font-semibold text-green-600">
+            <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Total Incentives</p>
+            <p className="text-lg font-semibold text-green-600 mt-0.5">
               {formatCurrency(totalIncentives)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-surface-500">Leave Days Used</p>
-            <p className="text-xl font-semibold text-surface-900">
+            <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Leave Days Used</p>
+            <p className="text-lg font-semibold text-surface-900 mt-0.5">
               {totalLeaveDays}
             </p>
           </div>
@@ -274,25 +277,25 @@ export default function DriverProfile() {
       </div>
 
       {/* Tab Content */}
-      <div className="animate-fade-in">
+      <div>
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Personal Information */}
-            <div className="bg-white rounded-2xl border border-surface-200 p-6">
-              <h2 className="font-semibold text-surface-900 mb-4">
+            <div className="bg-white rounded-lg border border-surface-200 p-4">
+              <h2 className="text-sm font-semibold text-surface-900 uppercase tracking-wider mb-3">
                 Personal Information
               </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-surface-500">Email</p>
-                    <p className="font-medium text-surface-900">
+                    <p className="text-xs text-surface-500 uppercase tracking-wider">Email</p>
+                    <p className="text-sm font-medium text-surface-900 mt-0.5">
                       {driver.email || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-surface-500">Phone</p>
-                    <p className="font-medium text-surface-900">
+                    <p className="text-xs text-surface-500 uppercase tracking-wider">Phone</p>
+                    <p className="text-sm font-medium text-surface-900 mt-0.5">
                       {driver.phone || "-"}
                     </p>
                   </div>
@@ -419,10 +422,29 @@ export default function DriverProfile() {
 
         {activeTab === "performance" && (
           <div className="bg-white rounded-2xl border border-surface-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-surface-100">
+            <div className="px-6 py-4 border-b border-surface-100 flex items-center justify-between">
               <h2 className="font-semibold text-surface-900">
                 Monthly Performance
               </h2>
+              <button
+                onClick={() => setShowAddPerformanceModal(true)}
+                className="btn btn-primary text-sm"
+              >
+                <svg
+                  className="w-4 h-4 mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add Performance
+              </button>
             </div>
             <div className="table-container">
               <table>
@@ -858,6 +880,13 @@ export default function DriverProfile() {
           driverId={driver.id}
           recordType={showAddRecordModal}
           onClose={() => setShowAddRecordModal(null)}
+        />
+      )}
+
+      {showAddPerformanceModal && (
+        <AddPerformanceModal
+          driver={driver}
+          onClose={() => setShowAddPerformanceModal(false)}
         />
       )}
     </div>

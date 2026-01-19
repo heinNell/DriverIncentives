@@ -14,7 +14,9 @@ VALUES
     ('safety_bonus_percentage', '{"value": 5, "unit": "percent"}', 'Safety bonus as percentage of base salary for accident-free month'),
     ('performance_multiplier', '{"tiers": [{"min": 100, "max": 110, "multiplier": 1.1}, {"min": 110, "max": 120, "multiplier": 1.2}, {"min": 120, "max": 999, "multiplier": 1.3}]}', 'Performance multiplier tiers based on percentage of target achieved'),
     ('deduction_per_incident', '{"value": 500, "unit": "USD"}', 'Standard deduction per incident'),
-    ('max_leave_days_annual', '{"value": 21, "unit": "days"}', 'Maximum annual leave days per year')
+    ('max_leave_days_annual', '{"value": 21, "unit": "days"}', 'Maximum annual leave days per year'),
+    ('incentive_divisor_local', '1000', 'Divisor for Local drivers - used to calculate rate per kilometer (Budget KM / Divisor = Rate per KM)'),
+    ('incentive_divisor_export', '1500', 'Divisor for Export drivers - used to calculate rate per kilometer (Budget KM / Divisor = Rate per KM)')
 ON CONFLICT (setting_key) DO NOTHING;
 
 -- ============================================
@@ -33,34 +35,34 @@ ON CONFLICT (driver_type, effective_from) DO NOTHING;
 -- ============================================
 
 INSERT INTO monthly_budgets
-    (year, month, driver_type, budgeted_kilometers, notes)
+    (year, month, driver_type, budgeted_kilometers, truck_count, notes)
 VALUES
     -- Local drivers (Total Budget: 824,036.67 km)
-    (2026, 1, 'local', 63681.86, 'January target - Local'),
-    (2026, 2, 'local', 57940.32, 'February target - Local'),
-    (2026, 3, 'local', 60806.98, 'March target - Local'),
-    (2026, 4, 'local', 66524.83, 'April target - Local'),
-    (2026, 5, 'local', 68345.16, 'May target - Local'),
-    (2026, 6, 'local', 78268.24, 'June target - Local'),
-    (2026, 7, 'local', 67271.05, 'July target - Local'),
-    (2026, 8, 'local', 69206.72, 'August target - Local'),
-    (2026, 9, 'local', 65463.26, 'September target - Local'),
-    (2026, 10, 'local', 74080.96, 'October target - Local'),
-    (2026, 11, 'local', 86115.21, 'November target - Local'),
-    (2026, 12, 'local', 69431.98, 'December target - Local'),
+    (2026, 1, 'local', 63681.86, 4, 'January target - Local'),
+    (2026, 2, 'local', 57940.32, 4, 'February target - Local'),
+    (2026, 3, 'local', 60806.98, 4, 'March target - Local'),
+    (2026, 4, 'local', 66524.83, 4, 'April target - Local'),
+    (2026, 5, 'local', 68345.16, 4, 'May target - Local'),
+    (2026, 6, 'local', 78268.24, 4, 'June target - Local'),
+    (2026, 7, 'local', 67271.05, 4, 'July target - Local'),
+    (2026, 8, 'local', 69206.72, 4, 'August target - Local'),
+    (2026, 9, 'local', 65463.26, 4, 'September target - Local'),
+    (2026, 10, 'local', 74080.96, 4, 'October target - Local'),
+    (2026, 11, 'local', 86115.21, 4, 'November target - Local'),
+    (2026, 12, 'local', 69431.98, 4, 'December target - Local'),
     -- Export drivers (Total Budget: 387,047.75 km)
-    (2026, 1, 'export', 26499.20, 'January target - Export'),
-    (2026, 2, 'export', 21494.89, 'February target - Export'),
-    (2026, 3, 'export', 22618.06, 'March target - Export'),
-    (2026, 4, 'export', 25328.80, 'April target - Export'),
-    (2026, 5, 'export', 44955.05, 'May target - Export'),
-    (2026, 6, 'export', 24053.17, 'June target - Export'),
-    (2026, 7, 'export', 27899.04, 'July target - Export'),
-    (2026, 8, 'export', 33082.18, 'August target - Export'),
-    (2026, 9, 'export', 51642.68, 'September target - Export'),
-    (2026, 10, 'export', 54633.95, 'October target - Export'),
-    (2026, 11, 'export', 28342.38, 'November target - Export'),
-    (2026, 12, 'export', 32497.35, 'December target - Export')
+    (2026, 1, 'export', 26499.20, 4, 'January target - Export'),
+    (2026, 2, 'export', 21494.89, 4, 'February target - Export'),
+    (2026, 3, 'export', 22618.06, 4, 'March target - Export'),
+    (2026, 4, 'export', 25328.80, 4, 'April target - Export'),
+    (2026, 5, 'export', 44955.05, 4, 'May target - Export'),
+    (2026, 6, 'export', 24053.17, 4, 'June target - Export'),
+    (2026, 7, 'export', 27899.04, 4, 'July target - Export'),
+    (2026, 8, 'export', 33082.18, 4, 'August target - Export'),
+    (2026, 9, 'export', 51642.68, 4, 'September target - Export'),
+    (2026, 10, 'export', 54633.95, 4, 'October target - Export'),
+    (2026, 11, 'export', 28342.38, 4, 'November target - Export'),
+    (2026, 12, 'export', 32497.35, 4, 'December target - Export')
 ON CONFLICT (year, month, driver_type) DO NOTHING;
 
 -- ============================================

@@ -189,6 +189,7 @@ export interface MonthlyBudgetRow {
   month: number;
   driver_type: "local" | "export";
   budgeted_kilometers: number;
+  truck_count: number;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -354,3 +355,81 @@ export interface DriverWithRelations extends Driver {
   performance?: DriverPerformance[];
   incentive_calculations?: IncentiveCalculation[];
 }
+
+// ============================================
+// AUDIT LOG TYPES
+// ============================================
+
+export interface AuditLogRow {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: "insert" | "update" | "delete" | "batch_calculate" | "approve" | "rollback";
+  old_values: Json | null;
+  new_values: Json | null;
+  changed_by: string | null;
+  changed_at: string;
+  metadata?: Json;
+}
+
+export type AuditLog = AuditLogRow;
+
+export type AuditLogInsert = Omit<AuditLogRow, "id" | "changed_at">;
+
+// ============================================
+// CALCULATION SNAPSHOT TYPES (for undo/rollback)
+// ============================================
+
+export interface CalculationSnapshotRow {
+  id: string;
+  calculation_id: string;
+  driver_id: string;
+  year: number;
+  month: number;
+  snapshot_data: Json;
+  created_at: string;
+  created_by: string | null;
+  reason: string | null;
+}
+
+export type CalculationSnapshot = CalculationSnapshotRow;
+
+export type CalculationSnapshotInsert = Omit<CalculationSnapshotRow, "id" | "created_at">;
+
+// ============================================
+// FUEL EFFICIENCY BONUS TYPES
+// ============================================
+
+export interface FuelEfficiencyTier {
+  id: string;
+  min_efficiency: number;  // km/L (lower bound, inclusive)
+  max_efficiency: number;  // km/L (upper bound, exclusive)
+  bonus_amount: number;    // USD bonus
+}
+
+export interface FuelEfficiencyBonusConfig {
+  enabled: boolean;
+  tiers: FuelEfficiencyTier[];
+}
+
+// ============================================
+// BATCH CALCULATION TYPES
+// ============================================
+
+export interface BatchCalculationJobRow {
+  id: string;
+  year: number;
+  month: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  total_drivers: number;
+  processed_count: number;
+  success_count: number;
+  failed_count: number;
+  total_incentives: number;
+  created_by: string | null;
+  created_at: string;
+  completed_at: string | null;
+  error_log: Json | null;
+}
+
+export type BatchCalculationJob = BatchCalculationJobRow;

@@ -85,23 +85,23 @@ export function LoginPage() {
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Fleet Incentives</h2>
-          <p className="mt-2 text-gray-600">
+          <h2 className="text-xl font-semibold text-gray-900">Fleet Incentives</h2>
+          <p className="mt-1 text-sm text-gray-600">
             Driver Management & Incentive Calculator
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="mb-5">
+            <h3 className="text-lg font-semibold text-gray-900">
               {useMagicLink
                 ? "Sign in with Magic Link"
                 : isSignUp
                   ? "Create Account"
                   : "Welcome Back"}
             </h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-0.5">
               {useMagicLink
                 ? "We'll send you a link to sign in"
                 : isSignUp
@@ -110,11 +110,11 @@ export function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-1.5"
               >
                 Email address
               </label>
@@ -124,7 +124,7 @@ export function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder="you@company.com"
               />
             </div>
@@ -133,7 +133,7 @@ export function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-1.5"
                 >
                   Password
                 </label>
@@ -143,7 +143,7 @@ export function LoginPage() {
                   required={!useMagicLink}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="••••••••"
                   minLength={6}
                 />
@@ -151,13 +151,13 @@ export function LoginPage() {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-lg text-xs">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 rounded-lg text-xs">
                 {message}
               </div>
             )}
@@ -165,7 +165,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center">
@@ -201,17 +201,17 @@ export function LoginPage() {
           </form>
 
           {/* Toggle options */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-5 space-y-2">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
+              <div className="relative flex justify-center text-xs">
                 <span className="px-2 bg-white text-gray-500">or</span>
               </div>
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-1.5">
               <button
                 type="button"
                 onClick={() => {
@@ -219,7 +219,7 @@ export function LoginPage() {
                   setError(null);
                   setMessage(null);
                 }}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
               >
                 {useMagicLink
                   ? "Use password instead"
@@ -234,7 +234,7 @@ export function LoginPage() {
                     setError(null);
                     setMessage(null);
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-700"
+                  className="text-xs text-gray-600 hover:text-gray-700"
                 >
                   {isSignUp
                     ? "Already have an account? Sign in"
@@ -246,7 +246,7 @@ export function LoginPage() {
         </div>
 
         {/* Demo notice */}
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-4 text-center text-xs text-gray-500">
           Secure authentication powered by Supabase
         </p>
       </div>

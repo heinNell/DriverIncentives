@@ -32,8 +32,18 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
+        sans: ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1.5', letterSpacing: '0.01em' }],
+        'sm': ['0.8125rem', { lineHeight: '1.5', letterSpacing: '0.005em' }],
+        'base': ['0.875rem', { lineHeight: '1.6', letterSpacing: '0' }],
+        'lg': ['1rem', { lineHeight: '1.5', letterSpacing: '-0.01em' }],
+        'xl': ['1.125rem', { lineHeight: '1.4', letterSpacing: '-0.015em' }],
+        '2xl': ['1.375rem', { lineHeight: '1.35', letterSpacing: '-0.02em' }],
+        '3xl': ['1.75rem', { lineHeight: '1.3', letterSpacing: '-0.025em' }],
+        '4xl': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.03em' }],
       },
       boxShadow: {
         soft: "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
