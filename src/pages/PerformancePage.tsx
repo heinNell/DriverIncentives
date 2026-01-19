@@ -233,8 +233,15 @@ export default function PerformancePage() {
         ? data.reduce((sum, p) => sum + p.achievement, 0) / data.length
         : 0;
     const aboveTarget = data.filter((p) => p.achievement >= 100).length;
+    
+    // Calculate average fuel efficiency (only for entries with fuel data)
+    const dataWithFuel = data.filter((p) => p.fuel_efficiency !== null && p.fuel_efficiency > 0);
+    const avgFuelEfficiency = dataWithFuel.length > 0
+      ? dataWithFuel.reduce((sum, p) => sum + (p.fuel_efficiency || 0), 0) / dataWithFuel.length
+      : null;
+    const fuelDataCount = dataWithFuel.length;
 
-    return { total, totalTarget, totalIncentives, totalFuelBonus, avgAchievement, aboveTarget, count: data.length };
+    return { total, totalTarget, totalIncentives, totalFuelBonus, avgAchievement, aboveTarget, count: data.length, avgFuelEfficiency, fuelDataCount };
   }, [filteredPerformance]);
 
   const handleSort = (field: typeof sortBy) => {
@@ -385,7 +392,7 @@ export default function PerformancePage() {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <div className="bg-white rounded-lg border border-surface-200 p-3">
           <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Records</p>
           <p className="text-xl font-semibold text-surface-900 mt-1">
@@ -411,6 +418,17 @@ export default function PerformancePage() {
           >
             {formatPercentage(stats.avgAchievement)}
           </p>
+        </div>
+        <div className="bg-white rounded-lg border border-surface-200 p-3">
+          <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Avg Fuel Eff.</p>
+          <p className="text-xl font-semibold text-blue-600 mt-1">
+            {stats.avgFuelEfficiency !== null ? `${stats.avgFuelEfficiency.toFixed(2)}` : "N/A"}
+          </p>
+          {stats.fuelDataCount > 0 && (
+            <p className="text-xs text-surface-500 mt-0.5">
+              {stats.fuelDataCount} of {stats.count} records
+            </p>
+          )}
         </div>
         <div className="bg-white rounded-lg border border-surface-200 p-3">
           <p className="text-xs text-surface-500 uppercase tracking-wider font-medium">Above Target</p>
@@ -509,6 +527,17 @@ export default function PerformancePage() {
                       <p className="text-surface-500 uppercase tracking-wider">Avg Achievement</p>
                       <p className={`font-semibold ${getAchievementColor(data.length > 0 ? data.reduce((sum, p) => sum + p.achievement, 0) / data.length : 0)}`}>
                         {formatPercentage(data.length > 0 ? data.reduce((sum, p) => sum + p.achievement, 0) / data.length : 0)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-surface-500 uppercase tracking-wider">Avg Fuel Eff.</p>
+                      <p className="font-semibold text-blue-600">
+                        {(() => {
+                          const driversWithFuel = data.filter((p) => p.fuel_efficiency !== null && p.fuel_efficiency > 0);
+                          if (driversWithFuel.length === 0) return "N/A";
+                          const avgFuel = driversWithFuel.reduce((sum, p) => sum + (p.fuel_efficiency || 0), 0) / driversWithFuel.length;
+                          return `${avgFuel.toFixed(2)} km/L`;
+                        })()}
                       </p>
                     </div>
                     <div className="text-right">
@@ -705,7 +734,17 @@ export default function PerformancePage() {
                             {data.reduce((sum, p) => sum + p.trips_completed, 0)}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5" colSpan={2}></td>
+                        <td className="px-4 py-2.5 text-right">
+                          <span className="text-sm font-semibold text-blue-600">
+                            {(() => {
+                              const driversWithFuel = data.filter((p) => p.fuel_efficiency !== null && p.fuel_efficiency > 0);
+                              if (driversWithFuel.length === 0) return "-";
+                              const avgFuel = driversWithFuel.reduce((sum, p) => sum + (p.fuel_efficiency || 0), 0) / driversWithFuel.length;
+                              return `${avgFuel.toFixed(2)} km/l`;
+                            })()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5"></td>
                         <td className="px-4 py-2.5 text-right">
                           <span className="text-sm font-bold text-green-600">
                             {formatCurrency(data.reduce((sum, p) => sum + p.incentiveTotal, 0))}

@@ -576,3 +576,266 @@ export function exportToExcel(data: ExportData): void {
 
 // Export the helper functions if needed elsewhere
 export { generateDriverMonthlyData, generateMonthlySummary };
+
+// ============================================
+// SCORECARD PDF EXPORT
+// ============================================
+
+export interface ScorecardExportData {
+  employeeName: string;
+  employeeId: string;
+  roleName: string;
+  year: number;
+  month: number;
+  monthName: string;
+  companyName?: string;
+  kraScores: {
+    kraName: string;
+    kraWeighting: number;
+    kpiScores: {
+      kpiName: string;
+      target: number;
+      actual: number;
+      unit: string | null;
+      achievementPercent: number;
+      score: number;
+      kpiWeighting: number;
+      weightedScore: number;
+    }[];
+    kraWeightedScore: number;
+    finalKraScore: number;
+  }[];
+  totalWeightedScore: number;
+  rating: string;
+}
+
+/**
+ * Export scorecard to PDF
+ */
+export function exportScorecardToPDF(data: ScorecardExportData): void {
+  const { 
+    employeeName, 
+    employeeId, 
+    roleName, 
+    year,
+    monthName,
+    companyName = "Performance Scorecard",
+    kraScores,
+    totalWeightedScore,
+    rating
+  } = data;
+  
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Header with company/title
+  doc.setFontSize(18);
+  doc.setTextColor(33, 37, 41);
+  doc.text(companyName, pageWidth / 2, 18, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setTextColor(59, 130, 246);
+  doc.text(`${roleName} Scorecard`, pageWidth / 2, 26, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.setTextColor(108, 117, 125);
+  doc.text(`${monthName} ${year}`, pageWidth / 2, 33, { align: "center" });
+
+  // Employee Info Box
+  doc.setFillColor(249, 250, 251);
+  doc.rect(14, 40, pageWidth - 28, 20, "F");
+  doc.setDrawColor(229, 231, 235);
+  doc.rect(14, 40, pageWidth - 28, 20, "S");
+
+  doc.setFontSize(10);
+  doc.setTextColor(55, 65, 81);
+  doc.text(`Employee: ${employeeName}`, 20, 48);
+  doc.text(`Employee ID: ${employeeId}`, 20, 55);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 65, 48);
+
+  // Build table data
+  const tableBody: (string | { content: string; colSpan?: number; styles?: object })[][] = [];
+
+  kraScores.forEach((kraScore) => {
+    kraScore.kpiScores.forEach((kpiScore, kpiIndex) => {
+      if (kpiIndex === 0) {
+        // First row with KRA info
+        tableBody.push([
+          { content: `${kraScore.kraWeighting}%`, styles: { fillColor: [239, 246, 255], fontStyle: "bold" } },
+          { content: kraScore.kraName, styles: { fillColor: [239, 246, 255], fontStyle: "bold" } },
+          kpiScore.kpiName,
+          `${kpiScore.target} ${kpiScore.unit || ""}`.trim(),
+          kpiScore.actual.toString(),
+          `${kpiScore.achievementPercent.toFixed(1)}%`,
+          `${kpiScore.score.toFixed(0)}%`,
+          `${kpiScore.kpiWeighting}%`,
+          kpiScore.weightedScore.toFixed(2),
+        ]);
+      } else {
+        // Subsequent KPI rows without KRA info
+        tableBody.push([
+          "",
+          "",
+          kpiScore.kpiName,
+          `${kpiScore.target} ${kpiScore.unit || ""}`.trim(),
+          kpiScore.actual.toString(),
+          `${kpiScore.achievementPercent.toFixed(1)}%`,
+          `${kpiScore.score.toFixed(0)}%`,
+          `${kpiScore.kpiWeighting}%`,
+          kpiScore.weightedScore.toFixed(2),
+        ]);
+      }
+    });
+
+    // KRA subtotal row
+    tableBody.push([
+      { content: `${kraScore.kraName} Sub Total`, colSpan: 7, styles: { fillColor: [243, 244, 246], halign: "right", fontStyle: "bold" } },
+      { content: "100%", styles: { fillColor: [243, 244, 246], fontStyle: "bold" } },
+      { content: kraScore.finalKraScore.toFixed(2), styles: { fillColor: [243, 244, 246], fontStyle: "bold", textColor: [37, 99, 235] } },
+    ]);
+  });
+
+  // Total row
+  tableBody.push([
+    { content: "TOTAL SCORE", colSpan: 7, styles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], halign: "right", fontStyle: "bold" } },
+    { content: "100%", styles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: "bold" } },
+    { content: totalWeightedScore.toFixed(1), styles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 11 } },
+  ]);
+
+  autoTable(doc, {
+    startY: 65,
+    head: [["Weight", "KRA", "KPI / Deliverable", "Target", "Actual", "Achieve %", "Score", "KPI Wt", "Weighted"]],
+    body: tableBody,
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [31, 41, 55],
+      textColor: 255,
+      fontStyle: "bold",
+      fontSize: 8,
+    },
+    columnStyles: {
+      0: { cellWidth: 14, halign: "center" },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 42 },
+      3: { cellWidth: 20, halign: "right" },
+      4: { cellWidth: 18, halign: "right" },
+      5: { cellWidth: 20, halign: "right" },
+      6: { cellWidth: 16, halign: "right" },
+      7: { cellWidth: 14, halign: "right" },
+      8: { cellWidth: 18, halign: "right" },
+    },
+    didParseCell: (hookData) => {
+      // Color code achievement percentage
+      if (hookData.column.index === 5 && hookData.section === "body") {
+        const value = parseFloat(hookData.cell.raw as string);
+        if (!isNaN(value)) {
+          if (value >= 100) {
+            hookData.cell.styles.textColor = [22, 163, 74]; // green
+          } else if (value >= 80) {
+            hookData.cell.styles.textColor = [37, 99, 235]; // blue
+          } else if (value >= 60) {
+            hookData.cell.styles.textColor = [202, 138, 4]; // yellow
+          } else {
+            hookData.cell.styles.textColor = [220, 38, 38]; // red
+          }
+        }
+      }
+    },
+  });
+
+  // Rating summary box
+  const finalY = doc.lastAutoTable.finalY + 10;
+
+  // Get rating color
+  let ratingBgColor: [number, number, number] = [243, 244, 246];
+  let ratingTextColor: [number, number, number] = [55, 65, 81];
+  
+  switch (rating) {
+    case "Excellent":
+      ratingBgColor = [220, 252, 231];
+      ratingTextColor = [22, 101, 52];
+      break;
+    case "Very Good":
+      ratingBgColor = [219, 234, 254];
+      ratingTextColor = [30, 64, 175];
+      break;
+    case "Good":
+      ratingBgColor = [207, 250, 254];
+      ratingTextColor = [14, 116, 144];
+      break;
+    case "Satisfactory":
+      ratingBgColor = [254, 249, 195];
+      ratingTextColor = [161, 98, 7];
+      break;
+    case "Needs Improvement":
+      ratingBgColor = [255, 237, 213];
+      ratingTextColor = [194, 65, 12];
+      break;
+    case "Unsatisfactory":
+      ratingBgColor = [254, 226, 226];
+      ratingTextColor = [153, 27, 27];
+      break;
+  }
+
+  // Final Rating Box
+  doc.setFillColor(...ratingBgColor);
+  doc.roundedRect(pageWidth - 80, finalY, 66, 18, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(108, 117, 125);
+  doc.text("Final Rating:", pageWidth - 75, finalY + 7);
+  doc.setFontSize(12);
+  doc.setTextColor(...ratingTextColor);
+  doc.text(rating, pageWidth - 75, finalY + 14);
+
+  // Score Box
+  doc.setFillColor(239, 246, 255);
+  doc.roundedRect(pageWidth - 150, finalY, 66, 18, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(108, 117, 125);
+  doc.text("Total Score:", pageWidth - 145, finalY + 7);
+  doc.setFontSize(14);
+  doc.setTextColor(37, 99, 235);
+  doc.text(`${totalWeightedScore.toFixed(1)}%`, pageWidth - 145, finalY + 14);
+
+  // Legend
+  const legendY = finalY + 28;
+  doc.setFontSize(9);
+  doc.setTextColor(107, 114, 128);
+  doc.text("Performance Rating Scale:", 14, legendY);
+  
+  const legends = [
+    { color: [34, 197, 94] as [number, number, number], text: "Excellent (90-100%)" },
+    { color: [59, 130, 246] as [number, number, number], text: "Very Good (80-90%)" },
+    { color: [6, 182, 212] as [number, number, number], text: "Good (70-80%)" },
+    { color: [234, 179, 8] as [number, number, number], text: "Satisfactory (60-70%)" },
+    { color: [249, 115, 22] as [number, number, number], text: "Needs Improvement (50-60%)" },
+    { color: [239, 68, 68] as [number, number, number], text: "Unsatisfactory (<50%)" },
+  ];
+
+  let legendX = 14;
+  doc.setFontSize(7);
+  legends.forEach((legend) => {
+    doc.setFillColor(...legend.color);
+    doc.circle(legendX + 2, legendY + 6, 2, "F");
+    doc.setTextColor(75, 85, 99);
+    doc.text(legend.text, legendX + 6, legendY + 7);
+    legendX += 32;
+  });
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175);
+  doc.text(
+    "This scorecard is auto-generated. Please verify all data before use.",
+    pageWidth / 2,
+    doc.internal.pageSize.getHeight() - 10,
+    { align: "center" }
+  );
+
+  // Save
+  const sanitizedName = employeeName.replace(/[^a-zA-Z0-9]/g, "_");
+  doc.save(`Scorecard_${sanitizedName}_${monthName}_${year}.pdf`);
+}
