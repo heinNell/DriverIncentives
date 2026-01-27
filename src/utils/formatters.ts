@@ -163,3 +163,122 @@ export function getDisciplinaryTypeLabel(type: string): string {
   };
   return labels[type] || type;
 }
+
+/**
+ * Convert ZIG amount to USD using the conversion rate
+ * @param zigAmount - Amount in ZIG currency
+ * @param conversionRate - ZIG amount per 1 USD (e.g., 25 means 25 ZIG = 1 USD)
+ * @returns Amount in USD
+ */
+export function convertZigToUsd(zigAmount: number, conversionRate: number): number {
+  if (!conversionRate || conversionRate <= 0) return 0;
+  return zigAmount / conversionRate;
+}
+
+/**
+ * Calculate total base salary in USD from USD and ZIG components
+ * @param usdBaseSalary - Base salary in USD
+ * @param zigBaseSalary - Base salary in ZIG
+ * @param conversionRate - ZIG amount per 1 USD
+ * @returns Total salary in USD
+ */
+export function calculateTotalBaseSalaryUsd(
+  usdBaseSalary: number,
+  zigBaseSalary: number,
+  conversionRate: number
+): number {
+  const zigInUsd = convertZigToUsd(zigBaseSalary, conversionRate);
+  return (usdBaseSalary || 0) + zigInUsd;
+}
+
+/**
+ * Format ZIG currency
+ */
+export function formatZigCurrency(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined) return "ZIG 0.00";
+  return `ZIG ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Get driver salary for a specific period from salary history
+ * Falls back to driver's current salary if no history exists
+ */
+export function getDriverSalaryForPeriod(
+  driverId: string,
+  year: number,
+  month: number,
+  salaryHistory: { driver_id: string; year: number; month: number; usd_base_salary: number; zig_base_salary: number }[],
+  driver?: { usd_base_salary?: number; zig_base_salary?: number; base_salary?: number }
+): { usdBaseSalary: number; zigBaseSalary: number; fromHistory: boolean } {
+  // First, try to find exact match in history
+  const exactMatch = salaryHistory.find(
+    (s) => s.driver_id === driverId && s.year === year && s.month === month
+  );
+  
+  if (exactMatch) {
+    return {
+      usdBaseSalary: exactMatch.usd_base_salary,
+      zigBaseSalary: exactMatch.zig_base_salary,
+      fromHistory: true,
+    };
+  }
+  
+  // Try to find the most recent salary before this period
+  const previousSalaries = salaryHistory
+    .filter(
+      (s) =>
+        s.driver_id === driverId &&
+        (s.year < year || (s.year === year && s.month < month))
+    )
+    .sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  
+  if (previousSalaries.length > 0) {
+    return {
+      usdBaseSalary: previousSalaries[0].usd_base_salary,
+      zigBaseSalary: previousSalaries[0].zig_base_salary,
+      fromHistory: true,
+    };
+  }
+  
+  // Fall back to driver's current salary
+  return {
+    usdBaseSalary: driver?.usd_base_salary || 0,
+    zigBaseSalary: driver?.zig_base_salary || 0,
+    fromHistory: false,
+  };
+}
+
+/**
+ * Calculate total base salary in USD for a specific period
+ * Uses salary history and conversion rates
+ */
+export function calculatePeriodBaseSalaryUsd(
+  driverId: string,
+  year: number,
+  month: number,
+  salaryHistory: { driver_id: string; year: number; month: number; usd_base_salary: number; zig_base_salary: number }[],
+  conversionRates: { year: number; month: number; rate: number }[],
+  driver?: { usd_base_salary?: number; zig_base_salary?: number; base_salary?: number }
+): number {
+  const { usdBaseSalary, zigBaseSalary } = getDriverSalaryForPeriod(
+    driverId,
+    year,
+    month,
+    salaryHistory,
+    driver
+  );
+  
+  // Get conversion rate for the period
+  const rateRecord = conversionRates.find(
+    (r) => r.year === year && r.month === month
+  );
+  const conversionRate = rateRecord?.rate || 1;
+  
+  // Calculate ZIG to USD
+  const zigInUsd = zigBaseSalary / conversionRate;
+  
+  return usdBaseSalary + zigInUsd;
+}

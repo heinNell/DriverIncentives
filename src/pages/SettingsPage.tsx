@@ -6,16 +6,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { useStore } from "../store/useStore";
-import type { FuelEfficiencyBonusConfig, FuelEfficiencyTier } from "../types/database";
+import type { FuelEfficiencyBonusConfig, FuelEfficiencyTier, ZigUsdConversionRate } from "../types/database";
 import
   {
     DEFAULT_EXPORT_FUEL_TIERS,
     DEFAULT_LOCAL_FUEL_TIERS,
   } from "../utils/calculations";
-import { formatCurrency } from "../utils/formatters";
+import { formatCurrency, getMonthName } from "../utils/formatters";
 
 export default function SettingsPage() {
-  const { incentiveSettings, setIncentiveSettings, showToast } = useStore();
+  const { incentiveSettings, setIncentiveSettings, zigUsdConversionRates, setZigUsdConversionRates, showToast } = useStore();
   const supabaseConfigured = isSupabaseConfigured();
 
   // Local state for fuel efficiency settings
@@ -27,6 +27,11 @@ export default function SettingsPage() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"local" | "export">("local");
+
+  // State for ZIG-USD conversion rates
+  const [rateYear, setRateYear] = useState(new Date().getFullYear());
+  const [editingRate, setEditingRate] = useState<ZigUsdConversionRate | null>(null);
+  const [isSavingRate, setIsSavingRate] = useState(false);
 
   // Load existing settings
   useEffect(() => {
@@ -460,6 +465,198 @@ export default function SettingsPage() {
         ) : (
           <p className="text-xs text-surface-500">No other incentive settings configured</p>
         )}
+      </div>
+
+      {/* ZIG-USD Conversion Rates */}
+      <div className="bg-white rounded-lg border border-surface-200">
+        <div className="px-4 py-3 border-b border-surface-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-surface-900 uppercase tracking-wider">
+                ZIG to USD Conversion Rates
+              </h2>
+              <p className="text-xs text-surface-500 mt-0.5">
+                Monthly conversion rates for ZIG salaries to USD
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={rateYear}
+                onChange={(e) => setRateYear(parseInt(e.target.value))}
+                className="form-select text-xs py-1.5"
+              >
+                {[2024, 2025, 2026, 2027].map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4">
+          {/* Rates Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-100">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-surface-500 uppercase">Month</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-surface-500 uppercase">Rate (ZIG/USD)</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-surface-500 uppercase">Notes</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-surface-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
+                  const rate = zigUsdConversionRates.find(
+                    (r) => r.year === rateYear && r.month === month
+                  );
+                  return (
+                    <tr key={month} className="border-b border-surface-50 hover:bg-surface-50">
+                      <td className="py-2 px-3 font-medium">{getMonthName(month)}</td>
+                      <td className="py-2 px-3 text-right font-mono">
+                        {rate ? rate.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : "-"}
+                      </td>
+                      <td className="py-2 px-3 text-surface-500 text-xs">{rate?.notes || "-"}</td>
+                      <td className="py-2 px-3 text-right">
+                        <button
+                          onClick={() => {
+                            if (rate) {
+                              setEditingRate(rate);
+                            } else {
+                              setEditingRate({ 
+                                id: "new", 
+                                year: rateYear, 
+                                month, 
+                                rate: 0, 
+                                effective_date: `${rateYear}-${month.toString().padStart(2, "0")}-01`,
+                                notes: null,
+                                created_at: "",
+                                updated_at: ""
+                              });
+                            }
+                          }}
+                          className="text-primary-600 hover:text-primary-700 text-xs font-medium"
+                        >
+                          {rate ? "Edit" : "Set Rate"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Edit Rate Modal */}
+          {editingRate && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <h3 className="text-lg font-semibold text-surface-900 mb-4">
+                  {editingRate.id === "new" ? "Add" : "Edit"} Conversion Rate - {getMonthName(editingRate.month)} {editingRate.year}
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 mb-1">
+                      ZIG per 1 USD
+                    </label>
+                    <input
+                      type="number"
+                      value={editingRate.rate || ""}
+                      onChange={(e) => setEditingRate({ ...editingRate, rate: parseFloat(e.target.value) || 0 })}
+                      className="form-input"
+                      step="0.0001"
+                      min="0"
+                      placeholder="e.g., 25.00"
+                    />
+                    <p className="text-xs text-surface-500 mt-1">
+                      Enter how many ZIG equals 1 USD (e.g., 25 means 25 ZIG = 1 USD)
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 mb-1">
+                      Notes (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingRate.notes || ""}
+                      onChange={(e) => setEditingRate({ ...editingRate, notes: e.target.value || null })}
+                      className="form-input"
+                      placeholder="e.g., Official rate from RBZ"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setEditingRate(null)}
+                    className="btn btn-secondary"
+                    disabled={isSavingRate}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!supabaseConfigured) {
+                        showToast("Cannot save in demo mode");
+                        return;
+                      }
+                      if (!editingRate.rate || editingRate.rate <= 0) {
+                        showToast("Please enter a valid rate");
+                        return;
+                      }
+                      setIsSavingRate(true);
+                      try {
+                        if (editingRate.id === "new") {
+                          await supabase.from("zig_usd_conversion_rates").insert({
+                            year: editingRate.year,
+                            month: editingRate.month,
+                            rate: editingRate.rate,
+                            effective_date: editingRate.effective_date,
+                            notes: editingRate.notes,
+                          });
+                        } else {
+                          await supabase
+                            .from("zig_usd_conversion_rates")
+                            .update({
+                              rate: editingRate.rate,
+                              notes: editingRate.notes,
+                            })
+                            .eq("id", editingRate.id);
+                        }
+                        // Refresh rates
+                        const { data } = await supabase
+                          .from("zig_usd_conversion_rates")
+                          .select("*")
+                          .order("year", { ascending: false });
+                        if (data) setZigUsdConversionRates(data);
+                        showToast("Conversion rate saved successfully");
+                        setEditingRate(null);
+                      } catch (error) {
+                        console.error("Error saving rate:", error);
+                        showToast("Error saving conversion rate");
+                      } finally {
+                        setIsSavingRate(false);
+                      }
+                    }}
+                    className="btn btn-primary"
+                    disabled={isSavingRate}
+                  >
+                    {isSavingRate ? "Saving..." : "Save Rate"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Info Box */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-700">
+              <strong>Note:</strong> These rates are used to convert ZIG base salaries to USD equivalents for driver compensation calculations.
+              Make sure to update rates monthly for accurate salary calculations.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* App Info */}

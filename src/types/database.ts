@@ -25,7 +25,9 @@ export interface DriverRow {
   passport_expiry: string | null;
   driver_type: "local" | "export";
   status: "active" | "inactive" | "suspended" | "terminated";
-  base_salary: number;
+  usd_base_salary: number;
+  zig_base_salary: number;
+  base_salary: number; // Computed: usd_base_salary + (zig_base_salary / conversion_rate)
   profile_image_url: string | null;
   address: string | null;
   emergency_contact_name: string | null;
@@ -199,6 +201,44 @@ export type MonthlyBudgetInsert = Omit<
   "id" | "created_at" | "updated_at"
 >;
 export type MonthlyBudgetUpdate = Partial<MonthlyBudgetInsert>;
+
+// ZIG to USD Conversion Rate types (month-on-month)
+export interface ZigUsdConversionRateRow {
+  id: string;
+  year: number;
+  month: number;
+  rate: number; // ZIG amount per 1 USD
+  effective_date: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export type ZigUsdConversionRateInsert = Omit<
+  ZigUsdConversionRateRow,
+  "id" | "created_at" | "updated_at"
+>;
+export type ZigUsdConversionRateUpdate = Partial<ZigUsdConversionRateInsert>;
+export type ZigUsdConversionRate = ZigUsdConversionRateRow;
+
+// Driver Salary History types (month-on-month salary tracking)
+export interface DriverSalaryHistoryRow {
+  id: string;
+  driver_id: string;
+  year: number;
+  month: number;
+  usd_base_salary: number;
+  zig_base_salary: number;
+  effective_date: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export type DriverSalaryHistoryInsert = Omit<
+  DriverSalaryHistoryRow,
+  "id" | "created_at" | "updated_at"
+>;
+export type DriverSalaryHistoryUpdate = Partial<DriverSalaryHistoryInsert>;
+export type DriverSalaryHistory = DriverSalaryHistoryRow;
 
 // Driver performance types
 export interface DriverPerformanceRow {

@@ -25,6 +25,8 @@ export default function AddDriverModal({ onClose }: AddDriverModalProps) {
     passport_expiry: "",
     driver_type: "local",
     status: "active",
+    usd_base_salary: 0,
+    zig_base_salary: 0,
     base_salary: 0,
     address: "",
     emergency_contact_name: "",
@@ -291,17 +293,11 @@ export default function AddDriverModal({ onClose }: AddDriverModalProps) {
                   <option value="suspended">Suspended</option>
                 </select>
               </div>
-              <div>
-                <label className="form-label">Base Salary (R)</label>
-                <input
-                  type="number"
-                  name="base_salary"
-                  className="form-input"
-                  value={formData.base_salary}
-                  onChange={handleChange}
-                  min="0"
-                  step="100"
-                />
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium">💡 Salary Setup</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  After creating the driver, go to the Earnings tab in their profile to set up monthly salary records with USD and ZIG amounts.
+                </p>
               </div>
             </div>
           </div>

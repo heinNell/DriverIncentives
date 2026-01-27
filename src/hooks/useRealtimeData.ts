@@ -12,6 +12,8 @@ export function useRealtimeData() {
     removeDriver,
     setKilometerRates,
     setMonthlyBudgets,
+    setZigUsdConversionRates,
+    setDriverSalaryHistory,
     setIncentiveSettings,
     setCustomFormulas,
     setDriverPerformance,
@@ -33,6 +35,8 @@ export function useRealtimeData() {
         driversRes,
         ratesRes,
         budgetsRes,
+        zigUsdRatesRes,
+        salaryHistoryRes,
         settingsRes,
         formulasRes,
         performanceRes,
@@ -45,6 +49,14 @@ export function useRealtimeData() {
           .order("effective_from", { ascending: false }),
         supabase
           .from("monthly_budgets")
+          .select("*")
+          .order("year", { ascending: false }),
+        supabase
+          .from("zig_usd_conversion_rates")
+          .select("*")
+          .order("year", { ascending: false }),
+        supabase
+          .from("driver_salary_history")
           .select("*")
           .order("year", { ascending: false }),
         supabase.from("incentive_settings").select("*"),
@@ -62,6 +74,8 @@ export function useRealtimeData() {
       if (driversRes.data) setDrivers(driversRes.data);
       if (ratesRes.data) setKilometerRates(ratesRes.data);
       if (budgetsRes.data) setMonthlyBudgets(budgetsRes.data);
+      if (zigUsdRatesRes.data) setZigUsdConversionRates(zigUsdRatesRes.data);
+      if (salaryHistoryRes.data) setDriverSalaryHistory(salaryHistoryRes.data);
       if (settingsRes.data) setIncentiveSettings(settingsRes.data);
       if (formulasRes.data) setCustomFormulas(formulasRes.data);
       if (performanceRes.data) setDriverPerformance(performanceRes.data);
@@ -76,6 +90,8 @@ export function useRealtimeData() {
     setDrivers,
     setKilometerRates,
     setMonthlyBudgets,
+    setZigUsdConversionRates,
+    setDriverSalaryHistory,
     setIncentiveSettings,
     setCustomFormulas,
     setDriverPerformance,
@@ -117,6 +133,24 @@ export function useRealtimeData() {
       .order("year", { ascending: false });
     if (data) setMonthlyBudgets(data);
   }, [setMonthlyBudgets]);
+
+  // Handle realtime ZIG-USD conversion rate changes
+  const handleZigUsdRateChange = useCallback(async () => {
+    const { data } = await supabase
+      .from("zig_usd_conversion_rates")
+      .select("*")
+      .order("year", { ascending: false });
+    if (data) setZigUsdConversionRates(data);
+  }, [setZigUsdConversionRates]);
+
+  // Handle realtime driver salary history changes
+  const handleSalaryHistoryChange = useCallback(async () => {
+    const { data } = await supabase
+      .from("driver_salary_history")
+      .select("*")
+      .order("year", { ascending: false });
+    if (data) setDriverSalaryHistory(data);
+  }, [setDriverSalaryHistory]);
 
   // Handle realtime settings changes
   const handleSettingsChange = useCallback(async () => {
@@ -178,6 +212,16 @@ export function useRealtimeData() {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "zig_usd_conversion_rates" },
+        handleZigUsdRateChange,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "driver_salary_history" },
+        handleSalaryHistoryChange,
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "incentive_settings" },
         handleSettingsChange,
       )
@@ -206,6 +250,8 @@ export function useRealtimeData() {
     handleDriverChange,
     handleRateChange,
     handleBudgetChange,
+    handleZigUsdRateChange,
+    handleSalaryHistoryChange,
     handleSettingsChange,
     handleFormulaChange,
     handlePerformanceChange,
@@ -346,9 +392,9 @@ export function useDriverRecords(driverId: string | undefined) {
 
 import { useState } from "react";
 import type {
-    Accident,
-    DisciplinaryRecord,
-    Incident,
-    LeaveRecord,
+  Accident,
+  DisciplinaryRecord,
+  Incident,
+  LeaveRecord,
 } from "../types/database";
 

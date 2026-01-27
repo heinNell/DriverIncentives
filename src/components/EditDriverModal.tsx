@@ -29,6 +29,8 @@ export default function EditDriverModal({
     passport_expiry: driver.passport_expiry || "",
     driver_type: driver.driver_type,
     status: driver.status,
+    usd_base_salary: driver.usd_base_salary || 0,
+    zig_base_salary: driver.zig_base_salary || 0,
     base_salary: driver.base_salary,
     address: driver.address || "",
     emergency_contact_name: driver.emergency_contact_name || "",
@@ -281,17 +283,11 @@ export default function EditDriverModal({
                   <option value="terminated">Terminated</option>
                 </select>
               </div>
-              <div>
-                <label className="form-label">Base Salary (R)</label>
-                <input
-                  type="number"
-                  name="base_salary"
-                  className="form-input"
-                  value={formData.base_salary ?? 0}
-                  onChange={handleChange}
-                  min="0"
-                  step="100"
-                />
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium">💡 Salary Management</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Manage salary records in the Earnings tab of the driver profile for monthly USD and ZIG tracking.
+                </p>
               </div>
             </div>
           </div>

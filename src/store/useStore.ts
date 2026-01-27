@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import type {
-    CustomFormula,
-    Driver,
-    DriverPerformance,
-    IncentiveCalculation,
-    IncentiveSetting,
-    KilometerRate,
-    MonthlyBudget,
+  CustomFormula,
+  Driver,
+  DriverPerformance,
+  DriverSalaryHistory,
+  IncentiveCalculation,
+  IncentiveSetting,
+  KilometerRate,
+  MonthlyBudget,
+  ZigUsdConversionRate,
 } from "../types/database";
 
 interface AppState {
@@ -24,6 +26,14 @@ interface AppState {
   // Monthly Budgets
   monthlyBudgets: MonthlyBudget[];
   setMonthlyBudgets: (budgets: MonthlyBudget[]) => void;
+
+  // ZIG-USD Conversion Rates
+  zigUsdConversionRates: ZigUsdConversionRate[];
+  setZigUsdConversionRates: (rates: ZigUsdConversionRate[]) => void;
+
+  // Driver Salary History
+  driverSalaryHistory: DriverSalaryHistory[];
+  setDriverSalaryHistory: (history: DriverSalaryHistory[]) => void;
 
   // Incentive Settings
   incentiveSettings: IncentiveSetting[];
@@ -77,6 +87,14 @@ export const useStore = create<AppState>((set) => ({
   // Monthly Budgets
   monthlyBudgets: [],
   setMonthlyBudgets: (monthlyBudgets) => set({ monthlyBudgets }),
+
+  // ZIG-USD Conversion Rates
+  zigUsdConversionRates: [],
+  setZigUsdConversionRates: (zigUsdConversionRates) => set({ zigUsdConversionRates }),
+
+  // Driver Salary History
+  driverSalaryHistory: [],
+  setDriverSalaryHistory: (driverSalaryHistory) => set({ driverSalaryHistory }),
 
   // Incentive Settings
   incentiveSettings: [],

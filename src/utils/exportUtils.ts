@@ -839,3 +839,520 @@ export function exportScorecardToPDF(data: ScorecardExportData): void {
   const sanitizedName = employeeName.replace(/[^a-zA-Z0-9]/g, "_");
   doc.save(`Scorecard_${sanitizedName}_${monthName}_${year}.pdf`);
 }
+
+/**
+ * Driver Earnings Report Export Interface
+ */
+export interface DriverEarningsExportData {
+  driver: Driver;
+  year: number;
+  companyName?: string;
+  monthlyEarnings: {
+    month: number;
+    usdBaseSalary: number;
+    zigBaseSalary: number;
+    conversionRate: number;
+    zigInUsd: number;
+    totalBaseSalary: number;
+    kmIncentive: number;
+    fuelBonus: number;
+    performanceBonus: number;
+    safetyBonus: number;
+    deductions: number;
+    totalIncentive: number;
+    totalEarnings: number;
+  }[];
+  yearOverYearData?: {
+    month: string;
+    currentYear: number;
+    previousYear: number;
+    growth: number;
+  }[];
+  annualSummary?: {
+    year: string;
+    baseSalary: number;
+    incentives: number;
+    totalEarnings: number;
+    incentivePercent: number;
+  }[];
+  chartImages?: {
+    earningsChart?: string;
+    yearOverYearChart?: string;
+    cumulativeChart?: string;
+    pieChart?: string;
+    annualChart?: string;
+  };
+}
+
+/**
+ * Export Driver Earnings Report to PDF with charts
+ */
+export function exportDriverEarningsToPDF(data: DriverEarningsExportData): void {
+  const { 
+    driver, 
+    year, 
+    companyName = "Driver Incentives",
+    monthlyEarnings,
+    yearOverYearData,
+    annualSummary,
+    chartImages 
+  } = data;
+  
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const driverName = `${driver.first_name} ${driver.last_name}`;
+
+  // Helper function to add a new page
+  const addNewPage = () => {
+    doc.addPage();
+    // Add header to each page
+    doc.setFontSize(10);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`${driverName} - Earnings Report ${year}`, 14, 10);
+    doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - 25, 10);
+    return 20;
+  };
+
+  // ============ PAGE 1: Title & Summary ============
+  // Title
+  doc.setFontSize(22);
+  doc.setTextColor(33, 37, 41);
+  doc.text(companyName, pageWidth / 2, 20, { align: "center" });
+
+  doc.setFontSize(16);
+  doc.setTextColor(59, 130, 246);
+  doc.text("Driver Earnings Report", pageWidth / 2, 30, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.setTextColor(108, 117, 125);
+  doc.text(`${driverName} - ${year}`, pageWidth / 2, 38, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.text(`Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 45, {
+    align: "center",
+  });
+
+  // Driver Info Box
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(14, 52, pageWidth - 28, 25, 3, 3, "F");
+  
+  doc.setFontSize(10);
+  doc.setTextColor(33, 37, 41);
+  doc.text("Employee ID:", 20, 62);
+  doc.text("Driver Type:", 80, 62);
+  doc.text("Status:", 140, 62);
+  
+  doc.setTextColor(59, 130, 246);
+  doc.text(driver.employee_id || "N/A", 20, 70);
+  doc.text(driver.driver_type === "local" ? "Local" : "Export", 80, 70);
+  doc.text(driver.status === "active" ? "Active" : "Inactive", 140, 70);
+
+  // Calculate totals
+  const totalBaseSalary = monthlyEarnings.reduce((sum, e) => sum + e.totalBaseSalary, 0);
+  const totalKmIncentive = monthlyEarnings.reduce((sum, e) => sum + e.kmIncentive, 0);
+  const totalFuelBonus = monthlyEarnings.reduce((sum, e) => sum + e.fuelBonus, 0);
+  const totalPerfBonus = monthlyEarnings.reduce((sum, e) => sum + e.performanceBonus, 0);
+  const totalSafetyBonus = monthlyEarnings.reduce((sum, e) => sum + e.safetyBonus, 0);
+  const totalDeductions = monthlyEarnings.reduce((sum, e) => sum + e.deductions, 0);
+  const grandTotalIncentives = totalKmIncentive + totalFuelBonus + totalPerfBonus + totalSafetyBonus;
+  const grandTotal = monthlyEarnings.reduce((sum, e) => sum + e.totalEarnings, 0);
+  const incentivePercent = grandTotal > 0 ? (grandTotalIncentives / grandTotal) * 100 : 0;
+
+  // Annual Summary Box
+  doc.setFontSize(12);
+  doc.setTextColor(33, 37, 41);
+  doc.text(`Annual Summary - ${year}`, 14, 88);
+
+  autoTable(doc, {
+    startY: 92,
+    head: [["Category", "Amount (USD)"]],
+    body: [
+      ["Base Salary (USD + ZIG converted)", formatCurrency(totalBaseSalary)],
+      ["KM Incentive", formatCurrency(totalKmIncentive)],
+      ["Diesel/Fuel Bonus", formatCurrency(totalFuelBonus)],
+      ["Performance Bonus", formatCurrency(totalPerfBonus)],
+      ["Safety Bonus", formatCurrency(totalSafetyBonus)],
+      ["Total Incentives", formatCurrency(grandTotalIncentives)],
+      ["Deductions", `-${formatCurrency(totalDeductions)}`],
+    ],
+    foot: [
+      ["Grand Total Earnings", formatCurrency(grandTotal)],
+    ],
+    styles: {
+      fontSize: 10,
+      cellPadding: 4,
+    },
+    headStyles: {
+      fillColor: [59, 130, 246],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    footStyles: {
+      fillColor: [34, 197, 94],
+      textColor: 255,
+      fontStyle: "bold",
+      fontSize: 11,
+    },
+    columnStyles: {
+      0: { cellWidth: 100 },
+      1: { cellWidth: 60, halign: "right" },
+    },
+  });
+
+  // Incentive Impact Box  
+  const summaryY = doc.lastAutoTable.finalY + 10;
+  doc.setFillColor(239, 246, 255);
+  doc.roundedRect(14, summaryY, pageWidth - 28, 20, 3, 3, "F");
+  
+  doc.setFontSize(10);
+  doc.setTextColor(59, 130, 246);
+  doc.text("Incentive Impact:", 20, summaryY + 8);
+  doc.setFontSize(14);
+  doc.setTextColor(34, 197, 94);
+  doc.text(`${incentivePercent.toFixed(1)}%`, 60, summaryY + 8);
+  doc.setFontSize(9);
+  doc.setTextColor(108, 117, 125);
+  doc.text("of total earnings came from incentives and bonuses", 80, summaryY + 8);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(59, 130, 246);
+  doc.text("Monthly Average:", 20, summaryY + 16);
+  doc.setFontSize(12);
+  doc.setTextColor(33, 37, 41);
+  doc.text(formatCurrency(grandTotal / 12), 60, summaryY + 16);
+  doc.setFontSize(9);
+  doc.setTextColor(108, 117, 125);
+  doc.text(`per month (Base: ${formatCurrency(totalBaseSalary / 12)} + Incentives: ${formatCurrency(grandTotalIncentives / 12)})`, 95, summaryY + 16);
+
+  // ============ PAGE 2: Monthly Earnings Table ============
+  let currentY = addNewPage();
+  
+  doc.setFontSize(14);
+  doc.setTextColor(33, 37, 41);
+  doc.text(`Monthly Earnings Breakdown - ${year}`, 14, currentY);
+
+  autoTable(doc, {
+    startY: currentY + 5,
+    head: [["Month", "Base USD", "ZIG→USD", "Total Base", "KM Inc", "Fuel", "Perf", "Safety", "Deduct", "Total"]],
+    body: monthlyEarnings.map((e) => [
+      getMonthName(e.month).substring(0, 3),
+      formatCurrency(e.usdBaseSalary),
+      formatCurrency(e.zigInUsd),
+      formatCurrency(e.totalBaseSalary),
+      formatCurrency(e.kmIncentive),
+      formatCurrency(e.fuelBonus),
+      formatCurrency(e.performanceBonus),
+      formatCurrency(e.safetyBonus),
+      `-${formatCurrency(e.deductions)}`,
+      formatCurrency(e.totalEarnings),
+    ]),
+    foot: [
+      [
+        "TOTAL",
+        formatCurrency(monthlyEarnings.reduce((s, e) => s + e.usdBaseSalary, 0)),
+        formatCurrency(monthlyEarnings.reduce((s, e) => s + e.zigInUsd, 0)),
+        formatCurrency(totalBaseSalary),
+        formatCurrency(totalKmIncentive),
+        formatCurrency(totalFuelBonus),
+        formatCurrency(totalPerfBonus),
+        formatCurrency(totalSafetyBonus),
+        `-${formatCurrency(totalDeductions)}`,
+        formatCurrency(grandTotal),
+      ],
+    ],
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    headStyles: {
+      fillColor: [59, 130, 246],
+      textColor: 255,
+      fontStyle: "bold",
+      fontSize: 7,
+    },
+    footStyles: {
+      fillColor: [34, 197, 94],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    alternateRowStyles: {
+      fillColor: [249, 250, 251],
+    },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      1: { cellWidth: 18, halign: "right" },
+      2: { cellWidth: 18, halign: "right" },
+      3: { cellWidth: 20, halign: "right" },
+      4: { cellWidth: 18, halign: "right" },
+      5: { cellWidth: 16, halign: "right" },
+      6: { cellWidth: 16, halign: "right" },
+      7: { cellWidth: 16, halign: "right" },
+      8: { cellWidth: 18, halign: "right" },
+      9: { cellWidth: 22, halign: "right", fontStyle: "bold" },
+    },
+  });
+
+  // ============ PAGE 3: Charts (if provided) ============
+  if (chartImages) {
+    currentY = addNewPage();
+    
+    doc.setFontSize(14);
+    doc.setTextColor(33, 37, 41);
+    doc.text("Earnings Visualizations", 14, currentY);
+    currentY += 8;
+
+    // Earnings Chart
+    if (chartImages.earningsChart) {
+      doc.setFontSize(10);
+      doc.setTextColor(108, 117, 125);
+      doc.text("Monthly Earnings Breakdown", 14, currentY);
+      currentY += 3;
+      
+      try {
+        doc.addImage(chartImages.earningsChart, "PNG", 14, currentY, pageWidth - 28, 70);
+        currentY += 75;
+      } catch (e) {
+        console.error("Failed to add earnings chart:", e);
+      }
+    }
+
+    // Year-over-Year Chart
+    if (chartImages.yearOverYearChart && currentY < pageHeight - 80) {
+      doc.setFontSize(10);
+      doc.setTextColor(108, 117, 125);
+      doc.text("Year-over-Year Comparison", 14, currentY);
+      currentY += 3;
+      
+      try {
+        doc.addImage(chartImages.yearOverYearChart, "PNG", 14, currentY, pageWidth - 28, 70);
+        currentY += 75;
+      } catch (e) {
+        console.error("Failed to add YoY chart:", e);
+      }
+    }
+
+    // New page for more charts if needed
+    if (chartImages.cumulativeChart || chartImages.pieChart) {
+      currentY = addNewPage();
+      
+      // Cumulative Growth Chart
+      if (chartImages.cumulativeChart) {
+        doc.setFontSize(10);
+        doc.setTextColor(108, 117, 125);
+        doc.text("Cumulative Earnings Growth", 14, currentY);
+        currentY += 3;
+        
+        try {
+          doc.addImage(chartImages.cumulativeChart, "PNG", 14, currentY, pageWidth - 28, 70);
+          currentY += 75;
+        } catch (e) {
+          console.error("Failed to add cumulative chart:", e);
+        }
+      }
+
+      // Pie Chart - Incentive Breakdown
+      if (chartImages.pieChart && currentY < pageHeight - 80) {
+        doc.setFontSize(10);
+        doc.setTextColor(108, 117, 125);
+        doc.text("Incentive Distribution", 14, currentY);
+        currentY += 3;
+        
+        try {
+          doc.addImage(chartImages.pieChart, "PNG", 14, currentY, 80, 60);
+        } catch (e) {
+          console.error("Failed to add pie chart:", e);
+        }
+      }
+    }
+  }
+
+  // ============ PAGE: Year-over-Year Data Table ============
+  if (yearOverYearData && yearOverYearData.length > 0) {
+    currentY = addNewPage();
+    
+    doc.setFontSize(14);
+    doc.setTextColor(33, 37, 41);
+    doc.text(`Year-over-Year Comparison: ${year - 1} vs ${year}`, 14, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 5,
+      head: [["Month", `${year - 1}`, `${year}`, "Growth %"]],
+      body: yearOverYearData.map((d) => [
+        d.month,
+        formatCurrency(d.previousYear),
+        formatCurrency(d.currentYear),
+        `${d.growth >= 0 ? '+' : ''}${d.growth.toFixed(1)}%`,
+      ]),
+      foot: [
+        [
+          "TOTAL",
+          formatCurrency(yearOverYearData.reduce((s, d) => s + d.previousYear, 0)),
+          formatCurrency(yearOverYearData.reduce((s, d) => s + d.currentYear, 0)),
+          (() => {
+            const prev = yearOverYearData.reduce((s, d) => s + d.previousYear, 0);
+            const curr = yearOverYearData.reduce((s, d) => s + d.currentYear, 0);
+            const growth = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+            return `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`;
+          })(),
+        ],
+      ],
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      footStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 40, halign: "right" },
+        2: { cellWidth: 40, halign: "right" },
+        3: { cellWidth: 30, halign: "right" },
+      },
+    });
+  }
+
+  // ============ PAGE: Annual Summary (Multi-Year) ============
+  if (annualSummary && annualSummary.length > 1) {
+    currentY = addNewPage();
+    
+    doc.setFontSize(14);
+    doc.setTextColor(33, 37, 41);
+    doc.text("Multi-Year Earnings Summary", 14, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 5,
+      head: [["Year", "Base Salary", "Incentives", "Total Earnings", "Incentive %"]],
+      body: annualSummary.map((s) => [
+        s.year,
+        formatCurrency(s.baseSalary),
+        formatCurrency(s.incentives),
+        formatCurrency(s.totalEarnings),
+        `${s.incentivePercent.toFixed(1)}%`,
+      ]),
+      styles: {
+        fontSize: 10,
+        cellPadding: 4,
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      columnStyles: {
+        0: { cellWidth: 25, fontStyle: "bold" },
+        1: { cellWidth: 40, halign: "right" },
+        2: { cellWidth: 40, halign: "right" },
+        3: { cellWidth: 45, halign: "right", fontStyle: "bold" },
+        4: { cellWidth: 30, halign: "right" },
+      },
+    });
+
+    // Annual chart if provided
+    if (chartImages?.annualChart) {
+      const chartY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.setTextColor(108, 117, 125);
+      doc.text("Annual Earnings Trend", 14, chartY);
+      
+      try {
+        doc.addImage(chartImages.annualChart, "PNG", 14, chartY + 3, pageWidth - 28, 70);
+      } catch (e) {
+        console.error("Failed to add annual chart:", e);
+      }
+    }
+  }
+
+  // ============ Footer on all pages ============
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.text(
+      "This report is auto-generated. Please verify all data before use.",
+      pageWidth / 2,
+      pageHeight - 8,
+      { align: "center" }
+    );
+    doc.text(
+      `Page ${i} of ${totalPages}`,
+      pageWidth - 20,
+      pageHeight - 8,
+      { align: "right" }
+    );
+  }
+
+  // Save
+  const sanitizedName = driverName.replace(/[^a-zA-Z0-9]/g, "_");
+  doc.save(`Driver_Earnings_${sanitizedName}_${year}.pdf`);
+}
+
+/**
+ * Capture chart element as base64 image using html2canvas
+ */
+export async function captureChartAsImage(chartElementId: string): Promise<string | null> {
+  try {
+    const html2canvas = (await import("html2canvas")).default;
+    const element = document.getElementById(chartElementId);
+    if (!element) {
+      console.error(`Element with id "${chartElementId}" not found`);
+      return null;
+    }
+    
+    const canvas = await html2canvas(element, {
+      backgroundColor: "#ffffff",
+      scale: 2, // Higher resolution
+      logging: false,
+      useCORS: true,
+    });
+    
+    return canvas.toDataURL("image/png");
+  } catch (error) {
+    console.error("Failed to capture chart:", error);
+    return null;
+  }
+}
+
+/**
+ * Capture multiple charts and return as object
+ */
+export async function captureAllCharts(chartIds: {
+  earningsChart?: string;
+  yearOverYearChart?: string;
+  cumulativeChart?: string;
+  pieChart?: string;
+  annualChart?: string;
+}): Promise<DriverEarningsExportData["chartImages"]> {
+  const images: DriverEarningsExportData["chartImages"] = {};
+  
+  if (chartIds.earningsChart) {
+    images.earningsChart = await captureChartAsImage(chartIds.earningsChart) || undefined;
+  }
+  if (chartIds.yearOverYearChart) {
+    images.yearOverYearChart = await captureChartAsImage(chartIds.yearOverYearChart) || undefined;
+  }
+  if (chartIds.cumulativeChart) {
+    images.cumulativeChart = await captureChartAsImage(chartIds.cumulativeChart) || undefined;
+  }
+  if (chartIds.pieChart) {
+    images.pieChart = await captureChartAsImage(chartIds.pieChart) || undefined;
+  }
+  if (chartIds.annualChart) {
+    images.annualChart = await captureChartAsImage(chartIds.annualChart) || undefined;
+  }
+  
+  return images;
+}
+
